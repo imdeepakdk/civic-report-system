@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Report an Issue — CivicFix{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-header">
+    <h1>📸 Report a Civic Issue</h1>
+    <p>Upload a photo and let AI do the rest. Takes less than 60 seconds.</p>
+  </div>
+
+  <div class="form-layout">
+    <div class="form-card">
+      <form id="reportForm" enctype="multipart/form-data">
+
+        <!-- Image Upload -->
+        <div class="field-group">
+          <label class="field-label">📷 Upload Photo <span class="required">*</span></label>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="imageInput" name="image" accept="image/*" hidden>
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <div class="upload-icon">📤</div>
+              <p>Drag & drop or <span class="upload-link">click to upload</span></p>
+              <p class="upload-hint">JPG, PNG, WebP up to 16MB</p>
+            </div>
+            <img id="imagePreview" src="" alt="" style="display:none">
+          </div>
+          <div id="aiStatus" class="ai-status" style="display:none">
+            <div class="ai-spinner">🤖</div>
+            <span>AI is analyzing your image...</span>
+          </div>
+        </div>
+
+        <!-- AI Result Display -->
+        <div id="aiResult" class="ai-result" style="display:none">
+          <div class="ai-result-header">
+            <span>🤖 AI Detection Result</span>
+            <span id="aiConfidence" class="confidence-badge"></span>
+          </div>
+          <div class="ai-result-body">
+            <div class="ai-category">
+              <span id="aiCategoryIcon"></span>
+              <span id="aiCategoryName"></span>
+            </div>
+            <p id="aiDescription" class="ai-desc-text"></p>
+            <div id="aiTags" class="ai-tags"></div>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="field-group">
+          <label class="field-label">📝 Issue Title <span class="required">*</span></label>
+          <input type="text" name="title" id="titleInput" class="field-input" placeholder="e.g. Large pothole near bus stop" required>
+        </div>
+
+        <!-- Description -->
+        <div class="field-group">
+          <label class="field-label">💬 Description</label>
+          <textarea name="description" id="descInput" class="field-input" rows="3" placeholder="Describe the issue in detail..."></textarea>
+        </div>
+
+        <!-- Severity -->
+        <div class="field-group">
+          <label class="field-label">⚡ Severity</label>
+          <div class="severity-options">
+            <label class="sev-opt"><input type="radio" name="severity" value="low"> 🟢 Low</label>
+            <label class="sev-opt"><input type="radio" name="severity" value="medium" checked> 🟡 Medium</label>
+            <label class="sev-opt"><input type="radio" name="severity" value="high"> 🔴 High</label>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="field-group">
+          <label class="field-label">📍 Location <span class="required">*</span></label>
+          <input type="text" name="location_name" id="locationName" class="field-input" placeholder="e.g. MG Road near Metro Station, Delhi" required>
+          <input type="hidden" name="lat" id="latInput">
+          <input type="hidden" name="lng" id="lngInput">
+          <button type="button" class="locate-btn" id="locateBtn">📡 Use My Location</button>
+          <div id="reportMap" class="inline-map"></div>
+          <p class="map-hint">Click on the map to pin exact location</p>
+        </div>
+
+        <!-- Reporter Info -->
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">👤 Your Name</label>
+            <input type="text" name="reporter_name" class="field-input" placeholder="Anonymous">
+          </div>
+          <div class="field-group">
+            <label class="field-label">📧 Email (for updates)</label>
+            <input type="email" name="reporter_email" class="field-input" placeholder="you@email.com">
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span id="submitText">🚀 Submit Report</span>
+          <span id="submitSpinner" style="display:none">⏳ Submitting...</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Success Panel -->
+    <div id="successPanel" class="success-panel" style="display:none">
+      <div class="success-icon">✅</div>
+      <h2>Report Submitted!</h2>
+      <p>Your issue has been logged and will be reviewed.</p>
+      <div class="report-id-display">
+        <span>Report ID:</span>
+        <strong id="successId"></strong>
+      </div>
+      <div class="success-actions">
+        <a id="trackLink" href="#" class="cta-primary">Track Your Report →</a>
+        <a href="/report" class="cta-secondary">Report Another</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const CATEGORY_ICONS = {{ category_icons | tojson }};
+
+// Map setup
+const map = L.map('reportMap').setView([28.6139, 77.2090], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+let marker = null;
+
+map.on('click', (e) => {
+  const { lat, lng } = e.latlng;
+  document.getElementById('latInput').value = lat;
+  document.getElementById('lngInput').value = lng;
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng]).addTo(map);
+});
+
+document.getElementById('locateBtn').addEventListener('click', () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      map.setView([lat, lng], 16);
+      document.getElementById('latInput').value = lat;
+      document.getElementById('lngInput').value = lng;
+      if (marker) map.removeLayer(marker);
+      marker = L.marker([lat, lng]).addTo(map).bindPopup('You are here').openPopup();
+    });
+  }
+});
+
+// Image upload
+const zone = document.getElementById('uploadZone');
+const input = document.getElementById('imageInput');
+const preview = document.getElementById('imagePreview');
+const placeholder = document.getElementById('uploadPlaceholder');
+
+zone.addEventListener('click', () => input.click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) {
+    input.files = e.dataTransfer.files;
+    handleImageSelect(e.dataTransfer.files[0]);
+  }
+});
+
+input.addEventListener('change', () => {
+  if (input.files[0]) handleImageSelect(input.files[0]);
+});
+
+function handleImageSelect(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Form submit
+document.getElementById('reportForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  document.getElementById('submitText').style.display = 'none';
+  document.getElementById('submitSpinner').style.display = 'inline';
+  btn.disabled = true;
+
+  const form = new FormData(e.target);
+  try {
+    const res = await fetch('/report', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('successId').textContent = data.report_id;
+      document.getElementById('trackLink').href = `/track/${data.report_id}`;
+
+      if (data.ai_result) {
+        const cat = data.ai_result.category;
+        document.getElementById('aiResult').style.display = 'block';
+        document.getElementById('aiCategoryIcon').textContent = CATEGORY_ICONS[cat] || '⚠️';
+        document.getElementById('aiCategoryName').textContent = cat.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase());
+        document.getElementById('aiConfidence').textContent = Math.round(data.ai_result.confidence * 100) + '% confident';
+        document.getElementById('aiDescription').textContent = data.ai_result.ai_description;
+        const tagsEl = document.getElementById('aiTags');
+        tagsEl.innerHTML = data.ai_result.tags.map(t => `<span class="tag">${t}</span>`).join('');
+      }
+
+      document.querySelector('.form-card').style.display = 'none';
+      document.getElementById('successPanel').style.display = 'block';
+    }
+  } catch(err) {
+    alert('Error submitting report. Please try again.');
+  }
+  btn.disabled = false;
+  document.getElementById('submitText').style.display = 'inline';
+  document.getElementById('submitSpinner').style.display = 'none';
+});
+</script>
+{% endblock %}

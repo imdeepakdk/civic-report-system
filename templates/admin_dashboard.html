@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — CivicFix{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  <div class="admin-header">
+    <h1>⚡ Admin Dashboard</h1>
+    <a href="/admin/logout" class="logout-btn">Logout</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="admin-stats">
+    <div class="admin-stat-card">
+      <div class="admin-stat-num">{{ stats.total }}</div>
+      <div class="admin-stat-label">Total Reports</div>
+    </div>
+    <div class="admin-stat-card" style="border-color:#ef4444">
+      <div class="admin-stat-num" style="color:#ef4444">{{ stats.reported }}</div>
+      <div class="admin-stat-label">New / Pending</div>
+    </div>
+    <div class="admin-stat-card" style="border-color:#f97316">
+      <div class="admin-stat-num" style="color:#f97316">{{ stats.in_progress }}</div>
+      <div class="admin-stat-label">In Progress</div>
+    </div>
+    <div class="admin-stat-card" style="border-color:#22c55e">
+      <div class="admin-stat-num" style="color:#22c55e">{{ stats.resolved }}</div>
+      <div class="admin-stat-label">Resolved</div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="category-breakdown">
+    <h3>Issues by Category</h3>
+    <div class="breakdown-grid">
+      {% for cat, count in by_category.items() %}
+      <div class="breakdown-item">
+        <span>{{ category_icons.get(cat,'⚠️') }} {{ cat.replace('_',' ').title() }}</span>
+        <span class="breakdown-count">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Reports Table -->
+  <div class="reports-table-wrap">
+    <h3>All Reports</h3>
+    <table class="reports-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Image</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Severity</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td><code>#{{ r.id }}</code></td>
+          <td>
+            {% if r.image %}
+            <img src="{{ url_for('static', filename='uploads/' + r.image) }}" class="table-thumb">
+            {% else %}
+            <span style="font-size:24px">{{ category_icons.get(r.category,'⚠️') }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="/track/{{ r.id }}">{{ r.title[:40] }}</a><br>
+            <small style="color:var(--muted)">{{ r.reporter_name }}</small>
+          </td>
+          <td>
+            <span class="cat-pill" style="background:{{ category_colors.get(r.category,'#64748b') }}20;color:{{ category_colors.get(r.category,'#64748b') }}">
+              {{ category_icons.get(r.category,'⚠️') }} {{ r.category.replace('_',' ') }}
+            </span>
+          </td>
+          <td><small>{{ r.location_name[:30] }}</small></td>
+          <td>
+            {% if r.severity == 'high' %}<span style="color:#ef4444">🔴 High</span>
+            {% elif r.severity == 'medium' %}<span style="color:#eab308">🟡 Medium</span>
+            {% else %}<span style="color:#22c55e">🟢 Low</span>{% endif %}
+          </td>
+          <td><span class="status-pill status-{{ r.status }}">{{ r.status.replace('_',' ').title() }}</span></td>
+          <td><small>{{ r.created_at[:10] }}</small></td>
+          <td>
+            <button class="action-btn" onclick="toggleUpdate('{{ r.id }}')">Update</button>
+            <div id="update-{{ r.id }}" class="update-form" style="display:none">
+              <form method="POST" action="/admin/update/{{ r.id }}">
+                <select name="status" class="mini-select">
+                  {% for s in status_flow %}
+                  <option value="{{ s }}" {{ 'selected' if s == r.status }}>{{ s.replace('_',' ').title() }}</option>
+                  {% endfor %}
+                </select>
+                <input type="text" name="comment" class="mini-input" placeholder="Add comment...">
+                <button type="submit" class="mini-btn">Save</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function toggleUpdate(id) {
+  const el = document.getElementById('update-' + id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

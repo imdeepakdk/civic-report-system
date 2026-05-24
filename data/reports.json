@@ -1,0 +1,93 @@
+[
+  {
+    "id": "2C5220ED",
+    "title": "hole",
+    "description": "big hole",
+    "location_name": "lock shab",
+    "lat": 28.617478540813227,
+    "lng": 77.20989301772228,
+    "reporter_name": "mohit",
+    "reporter_email": "sdagh122@gmail.com",
+    "image": "07f2f0ee19424707a429e2b3fed3f896_1407397.jpg",
+    "category": "pothole",
+    "ai_confidence": 0.7,
+    "ai_tags": [
+      "pothole",
+      "civic issue"
+    ],
+    "severity": "medium",
+    "ai_description": "Detected as pothole based on description keywords.",
+    "status": "resolved",
+    "created_at": "2026-05-19T09:25:08.084556",
+    "updated_at": "2026-05-19T09:26:07.091507",
+    "comments": [
+      {
+        "text": "we are seening on it",
+        "by": "Admin",
+        "at": "2026-05-19T09:25:34.912565"
+      },
+      {
+        "text": "we solve it",
+        "by": "Admin",
+        "at": "2026-05-19T09:26:07.091517"
+      }
+    ]
+  },
+  {
+    "id": "6F7F88DE",
+    "title": "dsfsdfs",
+    "description": "sfsdfsdfs",
+    "location_name": "avs enclave",
+    "lat": 28.552602629110194,
+    "lng": 77.26768978104688,
+    "reporter_name": "",
+    "reporter_email": "",
+    "image": null,
+    "category": "other",
+    "ai_confidence": 0.5,
+    "ai_tags": [
+      "civic issue",
+      "unclassified"
+    ],
+    "severity": "medium",
+    "ai_description": "Could not auto-classify. Marked for manual review.",
+    "status": "reported",
+    "created_at": "2026-05-19T09:03:34.315105",
+    "updated_at": "2026-05-19T09:03:34.315115",
+    "comments": []
+  },
+  {
+    "id": "F89256E9",
+    "title": "large pathhole",
+    "description": "i am seeing pathhole near bus stops for long time",
+    "location_name": "akbar roar near vanijya bhawan",
+    "lat": 28.611297522612627,
+    "lng": 77.22598212076124,
+    "reporter_name": "deep",
+    "reporter_email": "deep123@gmail.com",
+    "image": "4a1c1e9a0d6443af91995c90f25bec1a_1354305.jpeg",
+    "category": "pothole",
+    "ai_confidence": 0.7,
+    "ai_tags": [
+      "pothole",
+      "civic issue"
+    ],
+    "severity": "medium",
+    "ai_description": "Detected as pothole based on description keywords.",
+    "status": "resolved",
+    "created_at": "2026-05-19T08:17:59.681134",
+    "updated_at": "2026-05-19T08:18:45.871463",
+    "comments": [
+      {
+        "text": "we are seening on it",
+        "by": "Admin",
+        "at": "2026-05-19T08:18:31.621597"
+      },
+      {
+        "text": "we solve it",
+        "by": "Admin",
+        "at": "2026-05-19T08:18:45.871484"
+      }
+    ]
+  }
+]

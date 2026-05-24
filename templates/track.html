@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Track #{{ report.id }} — CivicFix{% endblock %}
+
+{% block content %}
+<div class="track-page">
+  <div class="track-header">
+    <a href="/" class="back-link">← Back</a>
+    <div class="track-id">Report #{{ report.id }}</div>
+  </div>
+
+  <div class="track-layout">
+    <div class="track-main">
+      {% if report.image %}
+      <div class="track-image">
+        <img src="{{ url_for('static', filename='uploads/' + report.image) }}" alt="Issue photo">
+      </div>
+      {% endif %}
+
+      <div class="track-card">
+        <div class="track-category" style="color: {{ category_colors.get(report.category, '#64748b') }}">
+          {{ category_icons.get(report.category, '⚠️') }}
+          {{ report.category.replace('_',' ').title() }}
+          {% if report.severity %}
+          <span class="severity-badge sev-{{ report.severity }}">{{ report.severity.upper() }}</span>
+          {% endif %}
+        </div>
+        <h1 class="track-title">{{ report.title }}</h1>
+        <p class="track-location">📍 {{ report.location_name }}</p>
+        <p class="track-desc">{{ report.description }}</p>
+
+        {% if report.ai_tags %}
+        <div class="tags">
+          {% for tag in report.ai_tags %}
+          <span class="tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if report.ai_description %}
+        <div class="ai-note">
+          <span class="ai-label">🤖 AI Analysis</span>
+          <p>{{ report.ai_description }}</p>
+          {% if report.ai_confidence %}
+          <span class="confidence-badge">{{ (report.ai_confidence * 100)|int }}% confident</span>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="track-meta-row">
+          <span>👤 {{ report.reporter_name }}</span>
+          <span>📅 {{ report.created_at[:10] }}</span>
+          <span>🔄 Updated: {{ report.updated_at[:10] }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="track-sidebar">
+      <!-- Status Timeline -->
+      <div class="status-card">
+        <h3>📋 Status Timeline</h3>
+        <div class="timeline">
+          {% for step in status_flow %}
+          {% set is_done = status_flow.index(step) <= status_flow.index(report.status) %}
+          {% set is_current = step == report.status %}
+          <div class="timeline-step {{ 'done' if is_done else '' }} {{ 'current' if is_current else '' }}">
+            <div class="step-dot"></div>
+            <div class="step-info">
+              <div class="step-name">{{ step.replace('_',' ').title() }}</div>
+              {% if is_current %}<div class="step-badge">← Current</div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Comments -->
+      {% if report.comments %}
+      <div class="comments-card">
+        <h3>💬 Updates</h3>
+        {% for c in report.comments %}
+        <div class="comment">
+          <div class="comment-meta">{{ c.by }} · {{ c.at[:10] }}</div>
+          <p>{{ c.text }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Share -->
+      <div class="share-card">
+        <h3>📤 Share This Report</h3>
+        <p class="share-url" id="shareUrl">{{ request.url }}</p>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('shareUrl').textContent);this.textContent='✅ Copied!'" class="copy-btn">
+          📋 Copy Link
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}CivicFix — Report City Issues{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-badge">🇮🇳 For Indian Cities</div>
+  <h1>Fix Your City.<br><span class="accent">Report. Track. Resolve.</span></h1>
+  <p class="hero-sub">Upload a photo of potholes, garbage, broken infrastructure. Our AI auto-detects the issue and routes it to the right department.</p>
+  <div class="hero-cta">
+    <a href="/report" class="cta-primary">📸 Report an Issue</a>
+    <a href="/map" class="cta-secondary">🗺 View Map</a>
+  </div>
+</section>
+
+<section class="stats-bar">
+  <div class="stat">
+    <span class="stat-num">{{ stats.total }}</span>
+    <span class="stat-label">Total Reports</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" style="color:#22c55e">{{ stats.resolved }}</span>
+    <span class="stat-label">Resolved ✅</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" style="color:#f97316">{{ stats.in_progress }}</span>
+    <span class="stat-label">In Progress 🔧</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" style="color:#ef4444">{{ stats.pending }}</span>
+    <span class="stat-label">Pending 📋</span>
+  </div>
+</section>
+
+<section class="categories-section">
+  <h2 class="section-title">Issue Categories</h2>
+  <div class="category-grid">
+    {% set cats = [('pothole','Potholes'),('garbage','Garbage'),('streetlight','Streetlight'),('flooding','Flooding'),('graffiti','Graffiti'),('broken_sidewalk','Sidewalk'),('tree_fallen','Fallen Tree'),('other','Other')] %}
+    {% for cat_id, cat_name in cats %}
+    <div class="cat-card" style="--cat-color: {{ category_colors[cat_id] }}">
+      <div class="cat-icon">{{ category_icons[cat_id] }}</div>
+      <div class="cat-name">{{ cat_name }}</div>
+      <div class="cat-count">{{ category_counts.get(cat_id, 0) }} reports</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="recent-section">
+  <div class="section-header">
+    <h2 class="section-title">Recent Reports</h2>
+    <a href="/map" class="view-all">View All on Map →</a>
+  </div>
+
+  {% if reports %}
+  <div class="reports-grid">
+    {% for r in reports %}
+    <div class="report-card">
+      {% if r.image %}
+      <div class="report-img">
+        <img src="{{ url_for('static', filename='uploads/' + r.image) }}" alt="Issue photo">
+        <span class="cat-badge" style="background: {{ category_colors.get(r.category, '#64748b') }}">
+          {{ category_icons.get(r.category, '⚠️') }} {{ r.category.replace('_',' ').title() }}
+        </span>
+      </div>
+      {% else %}
+      <div class="report-img no-img">
+        <span>{{ category_icons.get(r.category, '⚠️') }}</span>
+        <span class="cat-badge" style="background: {{ category_colors.get(r.category, '#64748b') }}">
+          {{ r.category.replace('_',' ').title() }}
+        </span>
+      </div>
+      {% endif %}
+      <div class="report-body">
+        <div class="report-meta">
+          <span class="report-id">#{{ r.id }}</span>
+          <span class="status-pill status-{{ r.status }}">{{ r.status.replace('_',' ').title() }}</span>
+        </div>
+        <h3 class="report-title">{{ r.title }}</h3>
+        <p class="report-location">📍 {{ r.location_name }}</p>
+        <p class="report-desc">{{ r.description[:100] }}{% if r.description|length > 100 %}...{% endif %}</p>
+        {% if r.ai_tags %}
+        <div class="tags">
+          {% for tag in r.ai_tags[:3] %}
+          <span class="tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="report-footer">
+          <span class="report-date">{{ r.created_at[:10] }}</span>
+          <a href="/track/{{ r.id }}" class="track-btn">Track →</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🏙️</div>
+    <h3>No reports yet</h3>
+    <p>Be the first to report a civic issue in your area!</p>
+    <a href="/report" class="cta-primary">Report Now</a>
+  </div>
+  {% endif %}
+</section>
+
+<section class="how-it-works">
+  <h2 class="section-title">How It Works</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">📸</div>
+      <h3>Snap a Photo</h3>
+      <p>Take a photo of the civic issue — pothole, garbage, broken light, anything.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">🤖</div>
+      <h3>AI Analyzes</h3>
+      <p>Our AI automatically categorizes the issue, detects severity, and adds smart tags.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">📍</div>
+      <h3>Pin Location</h3>
+      <p>Mark the exact location on the map so the right team can find it fast.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-icon">✅</div>
+      <h3>Track & Resolve</h3>
+      <p>Get updates as your report moves from "Reported" to "Resolved."</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

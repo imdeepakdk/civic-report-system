@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — CivicFix{% endblock %}
+{% block content %}
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <h2>Admin Access</h2>
+    <p>Enter the admin password to manage reports.</p>
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+    <form method="POST">
+      <input type="password" name="password" class="field-input" placeholder="Admin password" autofocus required>
+      <button type="submit" class="submit-btn" style="margin-top:16px">Login →</button>
+    </form>
+    <p style="margin-top:16px;color:var(--muted);font-size:13px">Default password: <code>admin123</code></p>
+  </div>
+</div>
+{% endblock %}

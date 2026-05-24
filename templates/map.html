@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Issue Map — CivicFix{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+#mainMap { height: calc(100vh - 140px); width: 100%; }
+.map-controls { display:flex; gap:12px; padding:16px 24px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; align-items:center; }
+.filter-btn { padding:6px 14px; border-radius:20px; border:2px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-family:var(--font-body); font-size:13px; transition:all .2s; }
+.filter-btn.active, .filter-btn:hover { background:var(--accent); border-color:var(--accent); color:#000; }
+.map-legend { position:absolute; bottom:30px; right:10px; z-index:1000; background:var(--surface); border-radius:12px; padding:12px 16px; border:1px solid var(--border); }
+.legend-item { display:flex; align-items:center; gap:8px; font-size:12px; margin-bottom:6px; }
+.legend-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.map-count { font-size:13px; color:var(--muted); margin-left:auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-controls">
+  <strong style="font-family:var(--font-display)">🗺 Issue Map</strong>
+  <button class="filter-btn active" data-cat="all">All</button>
+  <button class="filter-btn" data-cat="pothole">🕳️ Potholes</button>
+  <button class="filter-btn" data-cat="garbage">🗑️ Garbage</button>
+  <button class="filter-btn" data-cat="streetlight">💡 Lights</button>
+  <button class="filter-btn" data-cat="flooding">🌊 Flooding</button>
+  <button class="filter-btn" data-cat="tree_fallen">🌳 Trees</button>
+  <span class="map-count" id="mapCount">{{ reports|length }} issues shown</span>
+</div>
+<div style="position:relative">
+  <div id="mainMap"></div>
+  <div class="map-legend">
+    <strong style="font-size:12px;display:block;margin-bottom:8px">Legend</strong>
+    {% set cats = [('pothole','Pothole','#ef4444'),('garbage','Garbage','#f97316'),('streetlight','Streetlight','#eab308'),('flooding','Flooding','#3b82f6'),('tree_fallen','Tree','#22c55e'),('other','Other','#64748b')] %}
+    {% for cat_id, cat_name, color in cats %}
+    <div class="legend-item"><div class="legend-dot" style="background:{{color}}"></div>{{cat_name}}</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const reports = {{ reports | tojson }};
+const catColors = {{ category_colors | tojson }};
+const catIcons = {{ category_icons | tojson }};
+
+const map = L.map('mainMap').setView([28.6139, 77.2090], 11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+let allMarkers = [];
+
+function createMarker(r) {
+  const color = catColors[r.category] || '#64748b';
+  const icon = L.divIcon({
+    html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">${catIcons[r.category]||'⚠️'}</div>`,
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+  });
+
+  const m = L.marker([r.lat, r.lng], { icon });
+  m.bindPopup(`
+    <div style="min-width:200px;font-family:sans-serif">
+      <strong>${r.title}</strong><br>
+      <span style="color:${color}">${(r.category||'').replace(/_/g,' ')}</span><br>
+      <small>📍 ${r.location_name}</small><br>
+      <small>Status: <b>${(r.status||'').replace(/_/g,' ')}</b></small><br>
+      <a href="/track/${r.id}" style="color:${color}">Track Report #${r.id} →</a>
+    </div>
+  `);
+  m.category = r.category;
+  return m;
+}
+
+reports.forEach(r => {
+  if (r.lat && r.lng) {
+    const m = createMarker(r);
+    m.addTo(map);
+    allMarkers.push(m);
+  }
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.cat;
+    let count = 0;
+    allMarkers.forEach(m => {
+      if (cat === 'all' || m.category === cat) {
+        m.addTo(map); count++;
+      } else {
+        map.removeLayer(m);
+      }
+    });
+    document.getElementById('mapCount').textContent = count + ' issues shown';
+  });
+});
+</script>
+{% endblock %}
